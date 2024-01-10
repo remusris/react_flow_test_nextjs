@@ -12,9 +12,13 @@ import ReactFlow, {
   ReactFlowProvider,
   SelectionMode,
   useStore,
+  ControlButton,
+  Panel,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import CustomNode from "./CustomNode2";
+import { Button } from "@/components/ui/button";
+import { MousePointerSquareDashed, Pointer } from "lucide-react";
 
 // Specify types for your custom node data
 interface CustomNodeData {
@@ -93,15 +97,14 @@ const Flow: React.FC = () => {
   // Function to handle pane click
   const handlePaneClick = (event) => {
     console.log("pane was clicked");
-
-    console.log("isNodeSelected", isNodeSelected)
+    console.log("isNodeSelected", isNodeSelected);
 
     // Check if a node is selected, if so, return early
     if (isNodeSelected) {
-        console.log("Node is selected, not creating a new node.");
-        setIsNodeSelected(false)
-        return;
-      }
+      console.log("Node is selected, not creating a new node.");
+      setIsNodeSelected(false);
+      return;
+    }
 
     if (reactFlowInstance && reactFlowWrapper.current) {
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
@@ -137,7 +140,6 @@ const Flow: React.FC = () => {
     // Log the current position of the node
 
     /* console.log(`Node position: x=${node.position.x}, y=${node.position.y}`);
-
     console.log(`node`, node);
 
     setViewport({
@@ -147,24 +149,6 @@ const Flow: React.FC = () => {
     }) */
 
     setCenter(node.position.x, node.position.y);
-
-    // Calculate the center of the viewport
-    // This assumes the node's position is at its top-left corner
-    const viewportX = node.position.x - window.innerWidth / 2;
-    const viewportY = node.position.y - window.innerHeight / 2;
-
-    /* setViewport({
-        x: viewportX,
-        y: viewportY,
-        zoom: 2 // Set the desired zoom level
-    }); */
-
-    // Set the viewport to focus on the node, if needed
-    // setViewport({
-    //   x: node.position.x - window.innerWidth / 2 + node.__rf.width / 2,
-    //   y: node.position.y - window.innerHeight / 2 + node.__rf.height / 2,
-    //   zoom: 1.5, // Adjust zoom level as needed
-    // });
   };
 
   const newPaneClick = () => {
@@ -173,29 +157,16 @@ const Flow: React.FC = () => {
 
   const panOnDrag = [1, 2];
 
-  /* const onSelectionChange = (elements) => {
-    console.log('Selected elements:', elements);
-
-    if (elements.nodes > 0) {
-        setSelectedNodeState(true)
-        setSelectedNodes(elements.nodes)
-        console.log("selectedNodes", selectedNodes)
-    } else {
-        setSelectedNodeState(false)
-    }
-  }; */
-
   const onSelectionChange = useCallback((elements) => {
-    console.log("onSelectionChange")
-    console.log("elements", elements)
+    console.log("onSelectionChange");
+    console.log("elements", elements);
     // Check if any node is selected
     const hasSelectedNodes = elements.nodes && elements.nodes.length > 0;
-    
 
-    console.log(isNodeSelected)
+    console.log(isNodeSelected);
 
     if (elements.nodes && elements.nodes.length > 0) {
-        setIsNodeSelected(true);
+      setIsNodeSelected(true);
     }
   }, []);
 
@@ -207,6 +178,21 @@ const Flow: React.FC = () => {
   useEffect(() => {
     console.log("selectedNodes", selectedNodes);
   }, [selectedNodes, setSelectedNodes]);
+
+  const [mode, setMode] = useState("default");
+
+  // Handlers to switch modes
+  const switchToFigmaMode = (e) => {
+    console.log("click switchToFigmaMode");
+    e.stopPropagation();
+    setMode("figma");
+  };
+
+  const switchToDefaultMode = (e) => {
+    console.log("click switchToDefaultMode");
+    e.stopPropagation();
+    setMode("default");
+  };
 
   return (
     <div ref={reactFlowWrapper} style={{ width: "100%", height: "100%" }}>
@@ -220,23 +206,52 @@ const Flow: React.FC = () => {
         fitView
         className="bg-white"
         onPaneClick={handlePaneClick}
-        // onNodeClick={handleNodeClick}
-        selectionOnDrag
-        selectionMode={SelectionMode.Partial}
-        panOnScroll
-        panOnDrag={panOnDrag}
+        onNodeClick={handleNodeClick}
+        // selectionOnDrag
+        // selectionMode={SelectionMode.Partial}
+        // panOnScroll
+        // panOnDrag={panOnDrag}
+        panOnScroll={mode === "figma"}
+        selectionOnDrag={mode === "figma"}
+        panOnDrag={mode === "figma" ? panOnDrag : undefined}
+        selectionMode={mode === "figma" ? SelectionMode.Partial : undefined}
         onSelectionChange={onSelectionChange}
         deleteKeyCode={["Delete", "Backspace"]}
         onSelectionContextMenu={onSelectionContextMenu}
       >
         <MiniMap />
-        <Controls />
-
-        {isNodeSelected && (
-          <button style={{ position: "absolute", right: 20, top: 20 }}>
-            Button Visible When Node Selected
-          </button>
-        )}
+        <Controls>
+          <ControlButton
+            onClick={switchToDefaultMode}
+            className={`${mode === "default" ? "bg-gray-200" : ""}`} // Apply background if active
+          >
+            <Pointer></Pointer>
+          </ControlButton>
+          <ControlButton
+            onClick={switchToFigmaMode}
+            className={`${mode === "figma" ? "bg-gray-200" : ""}`} // Apply background if active
+          >
+            <MousePointerSquareDashed size={16}></MousePointerSquareDashed>
+          </ControlButton>
+        </Controls>
+        <Panel position="bottom-center">
+          <div className="flex items-center gap-1 ">
+            <Button
+              variant="outline"
+              onClick={switchToDefaultMode}
+              className={`${mode === "default" ? "bg-gray-100" : ""}`}
+            >
+              <Pointer size={16}></Pointer>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={switchToFigmaMode}
+              className={`${mode === "figma" ? "bg-gray-100" : ""}`}
+            >
+              <MousePointerSquareDashed size={16}></MousePointerSquareDashed>
+            </Button>
+          </div>
+        </Panel>
       </ReactFlow>
     </div>
   );
@@ -253,12 +268,94 @@ const FlowWithProvider = () => {
 
 export default FlowWithProvider;
 
+{
+  /* <div className="fixed inset-0 flex justify-center items-end pb-4">            
+            <div className="flex">              
+              <Button
+                className="mx-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                onClick={switchToDefaultMode} 
+              >
+                Default Mode
+              </Button>
+              <Button
+                className="mx-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                onClick={switchToFigmaMode}
+              >
+                Figma Mode
+              </Button>
+            </div>
+          </div> */
+}
+
+{
+  /* <div className="fixed inset-0 flex justify-center items-end">
+          <div className="mb-4">
+            
+            <Button
+              className="mx-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              onClick={switchToDefaultMode}
+              style={{
+                zIndex: 1000,
+              }}
+            >
+              Default Mode
+            </Button>
+            <Button
+              className="z-50 mx-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+              onClick={switchToFigmaMode}
+              style={{
+                zIndex: 1000,
+              }}
+            >
+              Figma Mode
+            </Button>
+            <button onClick={() => console.log("Button clicked!")}>
+              Test Button
+            </button>
+            {isNodeSelected && (
+              <Button variant="outline">
+                Button Visible When Node Selected
+              </Button>
+            )}
+          </div>
+        </div> */
+}
+
+// Calculate the center of the viewport
+// This assumes the node's position is at its top-left corner
+/* const viewportX = node.position.x - window.innerWidth / 2;
+    const viewportY = node.position.y - window.innerHeight / 2; */
+
+/* setViewport({
+        x: viewportX,
+        y: viewportY,
+        zoom: 2 // Set the desired zoom level
+    }); */
+
+// Set the viewport to focus on the node, if needed
+// setViewport({
+//   x: node.position.x - window.innerWidth / 2 + node.__rf.width / 2,
+//   y: node.position.y - window.innerHeight / 2 + node.__rf.height / 2,
+//   zoom: 1.5, // Adjust zoom level as needed
+// });
+
+/* const onSelectionChange = (elements) => {
+    console.log('Selected elements:', elements);
+
+    if (elements.nodes > 0) {
+        setSelectedNodeState(true)
+        setSelectedNodes(elements.nodes)
+        console.log("selectedNodes", selectedNodes)
+    } else {
+        setSelectedNodeState(false)
+    }
+  }; */
 
 // Use the selector with useStore
-  //   const isNodeSelected = useStore(selectedNodesSelector);
+//   const isNodeSelected = useStore(selectedNodesSelector);
 
-  // Function to handle pane click
-  /* const handlePaneClick = (event) => {
+// Function to handle pane click
+/* const handlePaneClick = (event) => {
     console.log("new pane click")
 
     if (reactFlowInstance && reactFlowWrapper.current) {
