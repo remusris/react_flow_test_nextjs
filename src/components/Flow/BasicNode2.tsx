@@ -17,8 +17,11 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import CustomNode from "./CustomNode2";
+import ResizableNodeSelected from "./ResizableNode"
 import { Button } from "@/components/ui/button";
 import { MousePointerSquareDashed, Pointer } from "lucide-react";
+import useSelectedNodeStore from "@/zustand/selectedNodeStore"
+ 
 
 // Specify types for your custom node data
 interface CustomNodeData {
@@ -30,6 +33,8 @@ interface CustomNodeData {
 // Define node types
 const nodeTypes = {
   custom: CustomNode,
+  resizeable: ResizableNodeSelected,
+  // tiptap: TipTapNode,
 };
 
 // Selector function to determine if any nodes are selected
@@ -84,15 +89,41 @@ const Flow: React.FC = () => {
   const reactFlowInstance = useReactFlow();
   const { setViewport, setCenter, deleteElements } = useReactFlow();
 
-  const [isNodeSelected, setIsNodeSelected] = useState(false);
+  const [isMouseOverNode, setIsMouseOverNode] = useState(false);
+
+  // this needs to be replaced
+  // const [isNodeSelected, setIsNodeSelected] = useState(false);
+
+  // this is the replacement 
+  const isNodeSelected = useSelectedNodeStore(state => state.isNodeSelected);
+  const setIsNodeSelected = useSelectedNodeStore(state => state.setIsNodeSelected);
 
   const [selectedNodeState, setSelectedNodeState] = useState(false);
   const [selectedNodes, setSelectedNodes] = useState();
+
+  // Access React Flow's internal state
+  const allNodes = useStore((state) => state.getNodes());
+  
+  const allEdges = useStore((state) => state.edges);
 
   const onConnect = useCallback(
     (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
     []
   );
+
+  const [preventScroll, setPreventScroll] = useState(true);
+
+  // Handler for mouse entering a node
+  const handleNodeMouseEnter = () => {
+    setPreventScroll(false);
+    setIsMouseOverNode(true);
+  };
+
+  // Handler for mouse leaving a node
+  const handleNodeMouseLeave = () => {
+    setPreventScroll(true);
+    setIsMouseOverNode(false);
+  };
 
   // Function to handle pane click
   const handlePaneClick = (event) => {
@@ -103,6 +134,7 @@ const Flow: React.FC = () => {
     if (isNodeSelected) {
       console.log("Node is selected, not creating a new node.");
       setIsNodeSelected(false);
+      console.log("IsNodeSelectedState", isNodeSelected)
       return;
     }
 
@@ -113,7 +145,7 @@ const Flow: React.FC = () => {
         y: event.clientY - reactFlowBounds.top,
       });
 
-      const newNode = {
+      /* const newNode = {
         id: `node-${Date.now()}`,
         type: "custom", // Set to 'custom' to use your custom node type
         position,
@@ -123,6 +155,13 @@ const Flow: React.FC = () => {
           emoji: "🌟", // Example emoji, change as needed
         },
       };
+ */
+      const newNode = {
+        id: `node-${Date.now()}`,
+        type: "resizeable", // Set to 'custom' to use your custom node type
+        position, 
+        data: { name: "Jane Doe", job: "CEO", emoji: "😎" },
+      }
 
       setNodes((nds) => nds.concat(newNode));
     }
@@ -148,12 +187,36 @@ const Flow: React.FC = () => {
         zoom: 2
     }) */
 
+    console.log("Clicked node:", node);
+
+    console.log("All nodes:", allNodes);
+    console.log("All edges:", allEdges);
+
     setCenter(node.position.x, node.position.y);
   };
 
   const newPaneClick = () => {
     console.log("pane clicked");
   };
+
+  // Function to handle key press
+  const handleKeyPress = useCallback((event) => {
+    if (event.key === "Enter") {
+      console.log("enter button pressed")
+      console.log("All Nodes:", allNodes);
+      
+    }
+  }, [allNodes]);
+
+  // Set up the event listener
+  /* useEffect(() => {
+    window.addEventListener("keydown", handleKeyPress);
+
+    // Clean up the event listener
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, [handleKeyPress]); */
 
   const panOnDrag = [1, 2];
 
@@ -175,9 +238,9 @@ const Flow: React.FC = () => {
     elements.preventDefault();
   };
 
-  useEffect(() => {
+  /* useEffect(() => {
     console.log("selectedNodes", selectedNodes);
-  }, [selectedNodes, setSelectedNodes]);
+  }, [selectedNodes, setSelectedNodes]); */
 
   const [mode, setMode] = useState("default");
 
@@ -194,6 +257,37 @@ const Flow: React.FC = () => {
     setMode("default");
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-')) {
+        console.log("the zoom event")
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleWheel = (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault(); // Prevent zooming with Ctrl + Mouse Wheel
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
   return (
     <div ref={reactFlowWrapper} style={{ width: "100%", height: "100%" }}>
       <ReactFlow
@@ -206,18 +300,21 @@ const Flow: React.FC = () => {
         fitView
         className="bg-white"
         onPaneClick={handlePaneClick}
-        onNodeClick={handleNodeClick}
+        // onNodeClick={handleNodeClick}
         // selectionOnDrag
         // selectionMode={SelectionMode.Partial}
         // panOnScroll
         // panOnDrag={panOnDrag}
-        panOnScroll={mode === "figma"}
+        panOnScroll={mode === "figma" && !isMouseOverNode}
         selectionOnDrag={mode === "figma"}
         panOnDrag={mode === "figma" ? panOnDrag : undefined}
         selectionMode={mode === "figma" ? SelectionMode.Partial : undefined}
         onSelectionChange={onSelectionChange}
         deleteKeyCode={["Delete", "Backspace"]}
         onSelectionContextMenu={onSelectionContextMenu}
+        preventScrolling={preventScroll}
+        onNodeMouseEnter={handleNodeMouseEnter}
+        onNodeMouseLeave={handleNodeMouseLeave}
       >
         <MiniMap />
         <Controls>

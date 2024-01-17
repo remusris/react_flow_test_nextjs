@@ -1,11 +1,19 @@
 import { memo } from "react";
 import { Handle, NodeProps, Position, NodeResizer } from "reactflow";
+import MainEditor from "@/mainEditor";
 
 const CustomNode = ({
   data,
   targetPosition = Position.Top,
   sourcePosition = Position.Bottom,
 }: NodeProps) => {
+
+  const handleEditorClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Additional logic if needed
+  };
+
   return (
     <>
       <NodeResizer
@@ -25,6 +33,9 @@ const CustomNode = ({
           className="bg-blue-500 w-3 h-2 rounded-sm"
         />
       </div>
+      {/* <div className="mt-4 flex-grow nodrag" >
+        <MainEditor></MainEditor>
+      </div> */}
     </>
   );
 };
