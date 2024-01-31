@@ -1,7 +1,7 @@
 import React from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { Handle, Position } from "reactflow";
+import { Handle, Position, NodeProps } from "reactflow";
 
 const TipTapNode = () => {
   const editor = useEditor({

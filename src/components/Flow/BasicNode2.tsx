@@ -18,9 +18,14 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import CustomNode from "./CustomNode2";
 import ResizableNodeSelected from "./ResizableNode"
+import TipTapNoResize from "./TipTapNoResize";
 import { Button } from "@/components/ui/button";
 import { MousePointerSquareDashed, Pointer } from "lucide-react";
 import useSelectedNodeStore from "@/zustand/selectedNodeStore"
+import TipTapResize from "./TipTapResize"
+import NodeResizerComponent from "./NodeResizer"
+import TipTapNode from "./TipTapNode"
+import { v4 as uuidv4 } from 'uuid';
  
 
 // Specify types for your custom node data
@@ -34,7 +39,10 @@ interface CustomNodeData {
 const nodeTypes = {
   custom: CustomNode,
   resizeable: ResizableNodeSelected,
-  // tiptap: TipTapNode,
+  tiptap: TipTapNode,
+  tiptapnoresize: TipTapNoResize,
+  tiptapresize: TipTapResize,
+  noderesizer: NodeResizerComponent,
 };
 
 // Selector function to determine if any nodes are selected
@@ -65,6 +73,56 @@ const initNodes: Node<CustomNodeData>[] = [
     data: { name: "Kristi Price", job: "Developer", emoji: "🤩" },
     position: { x: 200, y: 200 },
   },
+  {
+    id: `4`,
+    type: "noderesizer",
+    data: { name: "Kristi Price", job: "Developer", emoji: "🤩" },
+    position: { x: 123, y: 165 },
+  },
+
+  // Additional noderesizer nodes with specified data and random positions
+  {
+    id: `5`,
+    type: "noderesizer",
+    data: { name: "Kristi Price", job: "Developer", emoji: "🤩" },
+    position: { x: Math.floor(Math.random() * 10000), y: Math.floor(Math.random() * 10000) },
+  },
+  {
+    id: `6`,
+    type: "noderesizer",
+    data: { name: "Kristi Price", job: "Developer", emoji: "🤩" },
+    position: { x: Math.floor(Math.random() * 10000), y: Math.floor(Math.random() * 10000) },
+  },
+  {
+    id: `7`,
+    type: "noderesizer",
+    data: { name: "Kristi Price", job: "Developer", emoji: "🤩" },
+    position: { x: Math.floor(Math.random() * 10000), y: Math.floor(Math.random() * 10000) },
+  },
+  {
+    id: `8`,
+    type: "noderesizer",
+    data: { name: "Kristi Price", job: "Developer", emoji: "🤩" },
+    position: { x: Math.floor(Math.random() * 10000), y: Math.floor(Math.random() * 10000) },
+  },
+  {
+    id: `9`,
+    type: "noderesizer",
+    data: { name: "Kristi Price", job: "Developer", emoji: "🤩" },
+    position: { x: Math.floor(Math.random() * 10000), y: Math.floor(Math.random() * 10000) },
+  },
+  {
+    id: `10`,
+    type: "noderesizer",
+    data: { name: "Kristi Price", job: "Developer", emoji: "🤩" },
+    position: { x: Math.floor(Math.random() * 10000), y: Math.floor(Math.random() * 10000) },
+  },
+  {
+    id: `11`,
+    type: "noderesizer",
+    data: { name: "Kristi Price", job: "Developer", emoji: "🤩" },
+    position: { x: Math.floor(Math.random() * 10000), y: Math.floor(Math.random() * 10000) },
+  }
 ];
 
 // Initialize edges with types
@@ -103,7 +161,6 @@ const Flow: React.FC = () => {
 
   // Access React Flow's internal state
   const allNodes = useStore((state) => state.getNodes());
-  
   const allEdges = useStore((state) => state.edges);
 
   const onConnect = useCallback(
@@ -129,6 +186,7 @@ const Flow: React.FC = () => {
   const handlePaneClick = (event) => {
     console.log("pane was clicked");
     console.log("isNodeSelected", isNodeSelected);
+    console.log("event", event)
 
     // Check if a node is selected, if so, return early
     if (isNodeSelected) {
@@ -158,9 +216,17 @@ const Flow: React.FC = () => {
  */
       const newNode = {
         id: `node-${Date.now()}`,
-        type: "resizeable", // Set to 'custom' to use your custom node type
+        type: "custom", // Set to 'custom' to use your custom node type
         position, 
         data: { name: "Jane Doe", job: "CEO", emoji: "😎" },
+        // style: {
+        //   background: '#fff',
+        //   fontSize: 12,
+        //   border: '1px solid black',
+        //   padding: 5,
+        //   borderRadius: 15,
+        //   height: 100,
+        // },
       }
 
       setNodes((nds) => nds.concat(newNode));
@@ -257,7 +323,7 @@ const Flow: React.FC = () => {
     setMode("default");
   };
 
-  useEffect(() => {
+  /* useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-')) {
         console.log("the zoom event")
@@ -271,9 +337,9 @@ const Flow: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, []); */
 
-  useEffect(() => {
+  /* useEffect(() => {
     const handleWheel = (e) => {
       if (e.ctrlKey) {
         e.preventDefault(); // Prevent zooming with Ctrl + Mouse Wheel
@@ -286,7 +352,7 @@ const Flow: React.FC = () => {
     return () => {
       window.removeEventListener('wheel', handleWheel);
     };
-  }, []);
+  }, []); */
 
   return (
     <div ref={reactFlowWrapper} style={{ width: "100%", height: "100%" }}>
@@ -300,6 +366,7 @@ const Flow: React.FC = () => {
         fitView
         className="bg-white"
         onPaneClick={handlePaneClick}
+        /* permaignore */
         // onNodeClick={handleNodeClick}
         // selectionOnDrag
         // selectionMode={SelectionMode.Partial}
@@ -311,10 +378,10 @@ const Flow: React.FC = () => {
         selectionMode={mode === "figma" ? SelectionMode.Partial : undefined}
         onSelectionChange={onSelectionChange}
         deleteKeyCode={["Delete", "Backspace"]}
-        onSelectionContextMenu={onSelectionContextMenu}
+        // onSelectionContextMenu={onSelectionContextMenu}
         preventScrolling={preventScroll}
-        onNodeMouseEnter={handleNodeMouseEnter}
-        onNodeMouseLeave={handleNodeMouseLeave}
+        // onNodeMouseEnter={handleNodeMouseEnter}
+        // onNodeMouseLeave={handleNodeMouseLeave}
       >
         <MiniMap />
         <Controls>

@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Handle, NodeProps, Position, NodeResizer } from "reactflow";
+import { Handle, NodeProps, Position, NodeResizer, NodeResizeControl } from "reactflow";
 import MainEditor from "@/mainEditor";
 
 const CustomNode = ({
@@ -20,6 +20,7 @@ const CustomNode = ({
         handleClassName="!bg-green-400 !w-2 !h-2"
         lineClassName="!border-green-400"
       />
+      <NodeResizeControl></NodeResizeControl>
       <div className="bg-slate-200/80 px-2 py-4 rounded-md text-xs h-full">
         <Handle
           type="target"

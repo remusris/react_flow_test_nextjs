@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, memo } from "react";
 import { EditorContent, useEditor, BubbleMenu } from "@tiptap/react";
 import Extensions from "./extensions";
 import Props from "./props";
@@ -15,6 +15,8 @@ import { FaCaretDown } from "react-icons/fa";
 import { FaCheck } from "react-icons/fa";
 import { Separator } from "@/components/ui/separator";
 // import { useEditorStateContext } from "@/EditorStateContext/EditorStateContext";
+import { NodeProps } from "reactflow";
+import useSelectedNodeStore from "@/zustand/selectedNodeStore";
 
 // regular weight icons
 const Bold = "/bold.svg";
@@ -30,7 +32,21 @@ const StrikeThroughActive = "/strikethroughActive.svg";
 const UnderlineActive = "/underlineActive.svg";
 const CodeActive = "/codeActive.svg";
 
-const MainEditor: React.FC = () => {
+// const MainEditor: React.FC = () => {
+const MainEditor: React.FC<{ nodeProps: NodeProps }> = ({ nodeProps }) => {
+  // zustand state management
+  const isNodeSelected = useSelectedNodeStore(state => state.isNodeSelected);
+  const setIsNodeSelected = useSelectedNodeStore(state => state.setIsNodeSelected);
+  const nodeId = useSelectedNodeStore(state => state.id)
+  const setNodeId = useSelectedNodeStore(state => state.setId)
+  const nodeHeight = useSelectedNodeStore(state => state.height)
+  const nodeWidth = useSelectedNodeStore(state => state.width)
+  const setNodeHeight = useSelectedNodeStore(state => state.setHeight)
+  const setNodeWidth = useSelectedNodeStore(state => state.setWidth)
+  
+  const editorContentRef = useRef(null); // Create a ref
+
+  // const MainEditor: React.FC<{ triggerFocus: () => void }> = ({ triggerFocus }) => {
   const editor = useEditor({
     extensions: Extensions,
     editorProps: Props,
@@ -38,9 +54,38 @@ const MainEditor: React.FC = () => {
     <p>Hello, this is a custom document structure!</p>
   </div>`,
     onUpdate: ({ editor }) => {
-      console.log("editor", editor.getJSON());
+      console.log("editor via the onUpdate", editor.getJSON());
+      console.log("editorContentRef", editorContentRef);
+
+      if (editorContentRef.current) {
+        const { clientWidth, clientHeight } = editorContentRef.current;
+        console.log(`Width: ${clientWidth}, Height: ${clientHeight}`);
+        setNodeHeight(clientHeight)
+        setNodeWidth(clientWidth)
+      }
     },
+    onFocus: ({ editor }) => {
+      console.log("attempt to focus");
+    },
+    onCreate: ({ editor }) => {
+      console.log("onCreated just")
+
+      if (editorContentRef.current) {
+        const { clientWidth, clientHeight } = editorContentRef.current;
+        console.log(`Width: ${clientWidth}, Height: ${clientHeight}`);
+        setNodeHeight(clientHeight)
+        setNodeWidth(clientWidth)
+      }
+    }
   });
+
+  // useEffect(() => {
+  //   if (triggerFocus && editor) {
+  //     triggerFocus(() => {
+  //       editor.commands.focus();
+  //     });
+  //   }
+  // }, [triggerFocus, editor]);
 
   // add in an editable class
   // editor.setEditable(boolean)
@@ -68,6 +113,19 @@ const MainEditor: React.FC = () => {
     }
   }, [mainEditor, editor]); */
 
+  
+
+  useEffect(() => {
+    console.log("nodeProps inside index", nodeProps.id);
+
+    console.log("updated nodeId", nodeId);
+
+    if (nodeProps.id == nodeId) {
+      console.log("nodeProps checker");
+      // editor?.commands.focus()
+    }
+  }, [nodeId]);
+
   // the mouse up event handler for when out of scope of the Editor Content
   useEffect(() => {
     // Define the mouse-up event handler
@@ -86,14 +144,27 @@ const MainEditor: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    console.log("editorContentRef fired");
+
+    if (editorContentRef.current) {
+      const height = editorContentRef.current.clientHeight; // Get the height of the editor content
+      const { clientWidth, clientHeight } = editorContentRef.current;
+      console.log(`Width: ${clientWidth}, Height: ${clientHeight}`);
+      console.log("Height of EditorContent:", height);
+    }
+  }, [editorContentRef]);
+
   const handleEditorClick = (e) => {
+    console.log("click just happened ");
+
     e.preventDefault();
     e.stopPropagation();
     // Additional logic if needed
   };
 
   return (
-    <div className="min-h-screen w-full max-w-7xl mx-auto">
+    <div className="h-full w-width">
       {editor && (
         <BubbleMenu
           editor={editor}
@@ -248,9 +319,11 @@ const MainEditor: React.FC = () => {
         Turn Off Editing
       </button>
       <button onClick={() => editor?.setEditable(true)}>Turn On Editing</button> */}
-      <EditorContent onClick={handleEditorClick} editor={editor!} />
+      <div ref={editorContentRef}>
+        <EditorContent onClick={handleEditorClick} editor={editor!} />
+      </div>
     </div>
   );
 };
 
-export default MainEditor;
+export default memo(MainEditor) ;

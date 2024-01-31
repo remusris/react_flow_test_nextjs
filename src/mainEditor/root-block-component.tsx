@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/popover";
 import { Trash2, Focus, Fullscreen  } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import useSelectedNodeStore from "@/zustand/selectedNodeStore"
+import { staticGenerationAsyncStorage } from "next/dist/client/components/static-generation-async-storage.external";
 
 // Define the RootBlockComponent, which will serve as a custom Node View in the Tiptap editor
 const RootBlockComponent: React.FC<NodeViewProps> = ({
@@ -196,11 +198,11 @@ const RootBlockComponent: React.FC<NodeViewProps> = ({
   return (
     <NodeViewWrapper
       as="div"
-      className="group relative mx-auto flex w-full gap-2"
+      className="group relative flex w-full gap-2"
     >
-      <div className="relative mx-auto w-full max-w-4xl">
+      <div className="relative w-full max-w-4xl">
         {nodeContentType && renderButtonsContainer(getTopPosition())}
-        <NodeViewContent onClick={() => console.log("click inside node view content")} className="w-full" />
+        <NodeViewContent onClick={() => console.log("click inside node view component")} className="w-full" />
       </div>
     </NodeViewWrapper>
   );
