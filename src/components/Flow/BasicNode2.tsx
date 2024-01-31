@@ -121,7 +121,9 @@ const Flow: React.FC = () => {
         },
       };
 
-      setNodes((nds) => nds.concat(newNode));
+      // old method that might be causing issues
+      // setNodes((nds) => nds.concat(newNode));
+      reactFlowInstance.addNodes(newNode);
     }
   };
 
